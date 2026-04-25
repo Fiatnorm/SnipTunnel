@@ -377,7 +377,8 @@ async function httpHandshake(host, port, cfg) {
           tw.releaseLock();
           await origReadable.pipeTo(ts.writable);
         })().catch(() => { try { ts.writable.close(); } catch (_) {} });
-        sock.readable = ts.readable;
+        // 返回包装对象，避免赋值只读属性 sock.readable
+        return { readable: ts.readable, writable: sock.writable, close: () => sock.close() };
       }
       return sock;
     }
