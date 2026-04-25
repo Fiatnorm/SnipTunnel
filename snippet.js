@@ -314,7 +314,7 @@ async function socks5Handshake(host, port, cfg) {
     let res = (await r.read()).value;
     if (new Uint8Array(res)[1] === 0x02) {
       if (!hasAuth) throw new Error('S5 auth required');
-      const ub = enc.encode(username), pb = enc.encode(password);
+      const ub = ENC.encode(username), pb = ENC.encode(password);
       await w.write(new Uint8Array([1, ub.length, ...ub, pb.length, ...pb]));
       res = (await r.read()).value;
       if (new Uint8Array(res)[1] !== 0) throw new Error('S5 auth fail');
