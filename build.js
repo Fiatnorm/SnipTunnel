@@ -22,7 +22,7 @@ const randInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
 // ============ Pre-Terser: 函数顺序打乱 ============
 // 改变 AST 结构 → terser 的 mangle 分配顺序随之改变 → 变量名每次不同
 function shuffleFunctions(code) {
-  const funcRegex = /^function \w+\(/gm;
+  const funcRegex = /^(?:async )?function \w+\(/gm;
   const funcBlocks = [];
   let match;
   while ((match = funcRegex.exec(code)) !== null) {
