@@ -2144,19 +2144,7 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                                     1️⃣ 进入 规则(Rules) > Snippets → 2️⃣ 创建片段 → 3️⃣ 粘贴下方代码并部署 <br>→ 4️⃣ 片段规则 主机名 > 等于 > 自定义域名 <br>→ 5️⃣ 创建新代理DNS记录 > CNAME > 自定义域 > <strong><span onclick="copyToClipboard('cf.090227.xyz')" style="cursor: pointer; color: #00ff9d; text-decoration: underline;">cf.090227.xyz</span></strong>
                                 </p>
                                 
-                                <!-- 源码选择器 -->
-                                <div style="margin-bottom: 20px;">
-                                    <label for="snippetSourceSelect" style="display: block; margin-bottom: 12px; color: #e2e8f0; font-weight: 600;">选择源码版本：</label>
-                                    <select id="snippetSourceSelect" onchange="changeSnippetSource()">
-                                        <option value="v" selected>🎯 白嫖哥源码</option>
-                                        <option value="t12">📘 天书12源码</option>
-                                        <option value="t13">📗 天书13源码(不支持ed配置)</option>
-                                        <option value="my">🔥 ymyuuu源码(支持xhttp协议)</option>
-                                        <option value="ca110us">🎠 ca110us源码(trojan协议)</option>
-                                        <option value="ak">😂 AK优化源码(stallTCP优化传输机制)</option>
-                                        <option value="gl">🚀 GoodLiux优化版</option>
-                                    </select>
-                                </div>
+
 
                                 <!-- UUID 输入框和按钮 -->
                                 <div style="margin-bottom: 20px;">
@@ -3674,37 +3662,16 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
         // 存储当前订阅URL
         let cpurl = '';
 
-        // 源码URL映射
-        const snippetUrlMap = {
-            'v': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/v.js',
-            't12': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/t12.js', 
-            't13': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/t13.js',
-            'my': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/my.js',
-            'ca110us': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/ca110us.js',
-            'ak': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/ak.js',
-            'gl': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/gl.js'
-        };
-
-        // 混淆代码URL映射（仅支持的版本）
-        const snippetMinifiedUrlMap = {
-            'v': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/v.min.js'
-        };
+        // 源码URL
+        const SNIPPET_SOURCE_URL = 'https://raw.githubusercontent.com/Fiatnorm/SnipTunnel/main/snippet.js';
+        const SNIPPET_MINIFIED_URL = 'https://raw.githubusercontent.com/Fiatnorm/SnipTunnel/main/snippet.min.js';
 
         let snippetMinifiedCodeCache = '';
 
-        // 获取当前选中的源码类型
-        function getSelectedSnippetSource() {
-            const selectElement = document.getElementById('snippetSourceSelect');
-            return selectElement ? selectElement.value : 'v';
-        }
-
         // 加载 Snippet 代码
         async function loadSnippetCode() {
-            const sourceType = getSelectedSnippetSource();
-            const snippetJsUrl = snippetUrlMap[sourceType];
-            
             try {
-                const response = await fetch(GITHUB_PROXY + snippetJsUrl);
+                const response = await fetch(GITHUB_PROXY + SNIPPET_SOURCE_URL);
                 if (!response.ok) {
                     throw new Error('获取代码失败');
                 }
@@ -3713,7 +3680,7 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                 updateSnippetCode();
             } catch (error) {
                 console.error('加载Snippet代码失败:', error);
-                document.getElementById('snippetCode').value = \`加载代码失败，请自行从\\n\${snippetJsUrl}\\n获取最新代码\`;
+                document.getElementById('snippetCode').value = \`加载代码失败，请自行从\\n\${SNIPPET_SOURCE_URL}\\n获取最新代码\`;
             }
             
             // 同时加载混淆代码
@@ -3722,18 +3689,10 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
 
         // 加载混淆代码
         async function loadMinifiedCode() {
-            const sourceType = getSelectedSnippetSource();
-            const minUrl = snippetMinifiedUrlMap[sourceType];
             const el = document.getElementById('snippetMinifiedCode');
             
-            if (!minUrl) {
-                snippetMinifiedCodeCache = '';
-                if (el) el.value = '当前源码版本暂无混淆代码';
-                return;
-            }
-            
             try {
-                const response = await fetch(GITHUB_PROXY + minUrl);
+                const response = await fetch(GITHUB_PROXY + SNIPPET_MINIFIED_URL);
                 if (!response.ok) throw new Error('获取混淆代码失败');
                 const code = await response.text();
                 snippetMinifiedCodeCache = code;
@@ -3741,7 +3700,7 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
             } catch (error) {
                 console.error('加载混淆代码失败:', error);
                 snippetMinifiedCodeCache = '';
-                if (el) el.value = \`加载混淆代码失败，请自行从\\n\${minUrl}\\n获取最新代码\`;
+                if (el) el.value = \`加载混淆代码失败，请自行从\\n\${SNIPPET_MINIFIED_URL}\\n获取最新代码\`;
             }
         }
 
@@ -3820,44 +3779,7 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
 
 
 
-        // 源码选择变更处理函数
-        function changeSnippetSource() {
-            // 重新加载对应的源码
-            loadSnippetCode();
-            
-            // 检查ed选项的可用性
-            checkEdOptionAvailability();
-            
-            // 保存到缓存
-            saveFormData();
-        }
 
-        // 检查ed选项的可用性
-        function checkEdOptionAvailability() {
-            const enableEdCheckbox = document.getElementById('enableEd');
-            const enableEdOption = enableEdCheckbox ? enableEdCheckbox.closest('.checkbox-option') : null;
-            
-            if (enableEdCheckbox && enableEdOption) {
-                const selectedSource = getSelectedSnippetSource();
-                const activeTab = document.querySelector('.tab-button.active');
-                const isSnippetsTab = activeTab && activeTab.id === 'snippets-tab';
-                
-                if (isSnippetsTab && (selectedSource === 't13' || selectedSource === 'ak')) {
-                    // 天书13源码不支持ed参数，禁用选项
-                    enableEdCheckbox.disabled = true;
-                    enableEdCheckbox.checked = false;
-                    enableEdOption.style.opacity = '0.5';
-                    enableEdOption.style.pointerEvents = 'none';
-                    enableEdOption.title = '天书13、ak源码不支持ed参数配置';
-                } else {
-                    // 其他情况启用选项
-                    enableEdCheckbox.disabled = false;
-                    enableEdOption.style.opacity = '1';
-                    enableEdOption.style.pointerEvents = 'auto';
-                    enableEdOption.title = '';
-                }
-            }
-        }
 
         // 更新 Snippet 代码
         function updateSnippetCode() {
@@ -3866,39 +3788,11 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
             
             if (snippetCodeCache) {
                 const uuid = uuidInput.value.trim();
-                let processedUuid = uuid;
-                
-                // 检查当前选择的源码类型
-                const selectedSource = getSelectedSnippetSource();
-                
-                // 如果选择的是ca110us源码且UUID不为空，则进行sha224处理
-                if (selectedSource === 'ca110us' && uuid !== '') {
-                    try {
-                        // 使用sha224函数处理UUID
-                        if (typeof window.sha224 !== 'undefined') {
-                            processedUuid = window.sha224(uuid);
-                            console.log('🎯 使用 window.sha224 处理UUID');
-                            console.log('📝 原始UUID:', uuid);
-                            console.log('🔐 SHA-224结果:', processedUuid);
-                        } else if (typeof sha224 !== 'undefined') {
-                            processedUuid = sha224(uuid);
-                            console.log('🎯 使用 sha224 处理UUID');
-                            console.log('📝 原始UUID:', uuid);
-                            console.log('🔐 SHA-224结果:', processedUuid);
-                        } else {
-                            console.warn('⚠️ SHA224函数未加载，跳过验证');
-                        }
-                    } catch (error) {
-                        console.error('❌ SHA224处理失败:', error);
-                        processedUuid = ''; // 失败时跳过验证
-                    }
-                }
-                
                 let updatedCode = snippetCodeCache;
                 
                 // 替换第一行的 FIXED_UUID 值
                 const firstLine = "const FIXED_UUID = '';";
-                const newFirstLine = \`const FIXED_UUID = '\${processedUuid}';\`;
+                const newFirstLine = \`const FIXED_UUID = '\${uuid}';\`;
                 updatedCode = updatedCode.replace(firstLine, newFirstLine);
                 
                 snippetCodeElement.value = updatedCode;
@@ -4291,21 +4185,9 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                 });
             });
             
-            // 初始化源码选择下拉框状态
-            const snippetSourceSelect = document.getElementById('snippetSourceSelect');
-            if (snippetSourceSelect) {
-                // 添加事件监听
-                snippetSourceSelect.addEventListener('change', function() {
-                    changeSnippetSource();
-                });
-            }
-            
             // 执行初始切换以确保显示状态正确
             toggleIPMode();
             toggleProxyMode();
-            
-            // 初始化ed选项可用性检查
-            checkEdOptionAvailability();
             
             // 初始化HTTP代理选项可用性检查（强制使用 snippets）
             checkHttpProxyAvailability('snippets');
