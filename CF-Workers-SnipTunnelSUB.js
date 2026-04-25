@@ -3785,20 +3785,33 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
         function updateSnippetCode() {
             const uuidInput = document.getElementById('snippetUuid');
             const snippetCodeElement = document.getElementById('snippetCode');
+            const minifiedCodeElement = document.getElementById('snippetMinifiedCode');
             
+            const uuid = uuidInput ? uuidInput.value.trim() : '';
+            
+            // 更新源码中的 UUID
             if (snippetCodeCache) {
-                const uuid = uuidInput.value.trim();
                 let updatedCode = snippetCodeCache;
-                
-                // 替换 UUID 值（匹配 let UUID = '...' 格式）
                 if (uuid) {
                     updatedCode = updatedCode.replace(
                         /let UUID = '[^']*';/,
                         \`let UUID = '\${uuid}';\`
                     );
                 }
-                
                 snippetCodeElement.value = updatedCode;
+            }
+            
+            // 更新混淆代码中的 UUID
+            if (snippetMinifiedCodeCache && minifiedCodeElement) {
+                let updatedMin = snippetMinifiedCodeCache;
+                if (uuid) {
+                    // 混淆代码中 UUID 格式为 let e="uuid" (双引号，单字符变量名)
+                    updatedMin = updatedMin.replace(
+                        /="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"/,
+                        \`="\${uuid}"\`
+                    );
+                }
+                minifiedCodeElement.value = updatedMin;
             }
         }
 
