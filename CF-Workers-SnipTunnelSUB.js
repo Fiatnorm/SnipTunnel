@@ -1923,6 +1923,84 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                 margin-top: 5px;
             }
         }
+        
+        /* 源码/混淆 子标签页 */
+        .snippet-code-tabs {
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .snippet-tabs-header {
+            display: flex;
+            background: rgba(26, 32, 44, 0.9);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.25);
+        }
+        
+        .snippet-tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            color: #718096;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .snippet-tab-btn:hover {
+            color: #e2e8f0;
+            background: rgba(0, 255, 255, 0.08);
+        }
+        
+        .snippet-tab-btn.active {
+            color: #00ffff;
+            background: rgba(0, 255, 255, 0.12);
+        }
+        
+        .snippet-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00ffff, #00ff9d);
+        }
+        
+        .snippet-tab-btn:not(:last-child) {
+            border-right: 1px solid rgba(0, 255, 255, 0.15);
+        }
+        
+        .snippet-tab-panel {
+            display: none;
+            padding: 15px;
+            background: rgba(45, 55, 72, 0.5);
+        }
+        
+        .snippet-tab-panel.active {
+            display: block;
+            animation: fadeInUp 0.25s ease-out;
+        }
+        
+        #snippetMinifiedCode:hover {
+            border-color: rgba(0, 255, 255, 0.4) !important;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2) !important;
+        }
+        
+        #snippetMinifiedCode:active {
+            background: rgba(26, 32, 44, 0.95) !important;
+            transform: scale(0.999);
+        }
+        
+        @media (max-width: 768px) {
+            .snippet-tab-btn {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2113,39 +2191,91 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                                     
                                 </div>
                                 
-                                <!-- 代码显示框 -->
-                                <div style="position: relative;">
-                                    <textarea readonly onclick="copySnippetCode()" style="
-                                        width: 100%; 
-                                        height: 238px; 
-                                        background: #1a202c; 
-                                        border: 2px solid rgba(0, 255, 255, 0.2);
-                                        border-radius: 8px; 
-                                        padding: 15px; 
-                                        font-family: 'JetBrains Mono', monospace; 
-                                        font-size: 13px; 
-                                        color: #e2e8f0; 
-                                        resize: vertical;
-                                        line-height: 1.4;
-                                        cursor: pointer;
-                                        transition: all 0.3s ease;
-                                    " id="snippetCode" title="点击复制代码">正在加载代码...</textarea>
-                                    <button onclick="copySnippetCode()" style="
-                                        position: absolute;
-                                        top: 10px;
-                                        right: 10px;
-                                        background: rgba(0, 255, 255, 0.2);
-                                        color: #00ffff;
-                                        border: 1px solid rgba(0, 255, 255, 0.4);
-                                        border-radius: 6px;
-                                        padding: 6px 12px;
-                                        font-size: 12px;
-                                        cursor: pointer;
-                                        transition: all 0.3s ease;
-                                    " onmouseover="this.style.background='rgba(0, 255, 255, 0.3)'" 
-                                       onmouseout="this.style.background='rgba(0, 255, 255, 0.2)'">
-                                        📋 复制代码
-                                    </button>
+                                <!-- 源码/混淆 切换标签 -->
+                                <div class="snippet-code-tabs">
+                                    <div class="snippet-tabs-header">
+                                        <button class="snippet-tab-btn active" onclick="switchSnippetTab('source')" id="snippet-source-tab">📝 源码 (snippet.js)</button>
+                                        <button class="snippet-tab-btn" onclick="switchSnippetTab('minified')" id="snippet-minified-tab">🔒 混淆 (snippet.min.js)</button>
+                                    </div>
+                                    
+                                    <!-- 源码面板 -->
+                                    <div class="snippet-tab-panel active" id="snippet-source-panel">
+                                        <div style="position: relative;">
+                                            <textarea readonly onclick="copySnippetCode()" style="
+                                                width: 100%; 
+                                                height: 238px; 
+                                                background: #1a202c; 
+                                                border: 2px solid rgba(0, 255, 255, 0.2);
+                                                border-radius: 8px; 
+                                                padding: 15px; 
+                                                font-family: 'JetBrains Mono', monospace; 
+                                                font-size: 13px; 
+                                                color: #e2e8f0; 
+                                                resize: vertical;
+                                                line-height: 1.4;
+                                                cursor: pointer;
+                                                transition: all 0.3s ease;
+                                            " id="snippetCode" title="点击复制代码">正在加载代码...</textarea>
+                                            <button onclick="copySnippetCode()" style="
+                                                position: absolute;
+                                                top: 10px;
+                                                right: 10px;
+                                                background: rgba(0, 255, 255, 0.2);
+                                                color: #00ffff;
+                                                border: 1px solid rgba(0, 255, 255, 0.4);
+                                                border-radius: 6px;
+                                                padding: 6px 12px;
+                                                font-size: 12px;
+                                                cursor: pointer;
+                                                transition: all 0.3s ease;
+                                            " onmouseover="this.style.background='rgba(0, 255, 255, 0.3)'" 
+                                               onmouseout="this.style.background='rgba(0, 255, 255, 0.2)'">
+                                                📋 复制代码
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 混淆代码面板 -->
+                                    <div class="snippet-tab-panel" id="snippet-minified-panel">
+                                        <div style="position: relative;">
+                                            <textarea readonly onclick="copyMinifiedCode()" style="
+                                                width: 100%; 
+                                                height: 238px; 
+                                                background: #1a202c; 
+                                                border: 2px solid rgba(0, 255, 255, 0.2);
+                                                border-radius: 8px; 
+                                                padding: 15px; 
+                                                font-family: 'JetBrains Mono', monospace; 
+                                                font-size: 13px; 
+                                                color: #a0aec0; 
+                                                resize: vertical;
+                                                line-height: 1.4;
+                                                cursor: pointer;
+                                                transition: all 0.3s ease;
+                                                word-break: break-all;
+                                            " id="snippetMinifiedCode" title="点击复制混淆代码">正在加载混淆代码...</textarea>
+                                            <button onclick="copyMinifiedCode()" style="
+                                                position: absolute;
+                                                top: 10px;
+                                                right: 10px;
+                                                background: rgba(0, 255, 255, 0.2);
+                                                color: #00ffff;
+                                                border: 1px solid rgba(0, 255, 255, 0.4);
+                                                border-radius: 6px;
+                                                padding: 6px 12px;
+                                                font-size: 12px;
+                                                cursor: pointer;
+                                                transition: all 0.3s ease;
+                                            " onmouseover="this.style.background='rgba(0, 255, 255, 0.3)'" 
+                                               onmouseout="this.style.background='rgba(0, 255, 255, 0.2)'">
+                                                📋 复制代码
+                                            </button>
+                                        </div>
+                                        <div style="background: rgba(0, 255, 157, 0.08); border-left: 4px solid #00ff9d; padding: 10px 12px; margin-top: 10px; border-radius: 6px; font-size: 13px;">
+                                            <span style="color: #00ff9d; font-weight: 600;">🔒 混淆说明：</span>
+                                            <span style="color: #e2e8f0;">此代码经过多态混淆处理（变量重命名、字符串分割、十六进制化），每次构建产物不同，功能与源码完全一致</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div style="background: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107; padding: 12px; margin-top: 10px; border-radius: 6px;">
@@ -2353,6 +2483,7 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                     </div>
                 </div>
             </div>
+            
             
             <!-- 生成按钮 -->
             <div class="button-container">
@@ -3554,6 +3685,13 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
             'gl': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/gl.js'
         };
 
+        // 混淆代码URL映射（仅支持的版本）
+        const snippetMinifiedUrlMap = {
+            'v': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/v.min.js'
+        };
+
+        let snippetMinifiedCodeCache = '';
+
         // 获取当前选中的源码类型
         function getSelectedSnippetSource() {
             const selectElement = document.getElementById('snippetSourceSelect');
@@ -3577,7 +3715,110 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                 console.error('加载Snippet代码失败:', error);
                 document.getElementById('snippetCode').value = \`加载代码失败，请自行从\\n\${snippetJsUrl}\\n获取最新代码\`;
             }
+            
+            // 同时加载混淆代码
+            loadMinifiedCode();
         }
+
+        // 加载混淆代码
+        async function loadMinifiedCode() {
+            const sourceType = getSelectedSnippetSource();
+            const minUrl = snippetMinifiedUrlMap[sourceType];
+            const el = document.getElementById('snippetMinifiedCode');
+            
+            if (!minUrl) {
+                snippetMinifiedCodeCache = '';
+                if (el) el.value = '当前源码版本暂无混淆代码';
+                return;
+            }
+            
+            try {
+                const response = await fetch(GITHUB_PROXY + minUrl);
+                if (!response.ok) throw new Error('获取混淆代码失败');
+                const code = await response.text();
+                snippetMinifiedCodeCache = code;
+                if (el) el.value = code;
+            } catch (error) {
+                console.error('加载混淆代码失败:', error);
+                snippetMinifiedCodeCache = '';
+                if (el) el.value = \`加载混淆代码失败，请自行从\\n\${minUrl}\\n获取最新代码\`;
+            }
+        }
+
+        // 切换源码/混淆标签页
+        function switchSnippetTab(tab) {
+            const sourceTab = document.getElementById('snippet-source-tab');
+            const minifiedTab = document.getElementById('snippet-minified-tab');
+            const sourcePanel = document.getElementById('snippet-source-panel');
+            const minifiedPanel = document.getElementById('snippet-minified-panel');
+            
+            if (tab === 'source') {
+                sourceTab.classList.add('active');
+                minifiedTab.classList.remove('active');
+                sourcePanel.classList.add('active');
+                minifiedPanel.classList.remove('active');
+            } else {
+                sourceTab.classList.remove('active');
+                minifiedTab.classList.add('active');
+                sourcePanel.classList.remove('active');
+                minifiedPanel.classList.add('active');
+            }
+        }
+
+        // 复制混淆代码
+        function copyMinifiedCode() {
+            const el = document.getElementById('snippetMinifiedCode');
+            const code = el.value;
+            
+            el.style.background = 'rgba(0, 255, 255, 0.1)';
+            el.style.borderColor = 'rgba(0, 255, 255, 0.6)';
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(code).then(() => {
+                    showCopySuccessForElement(el);
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(code, el);
+                    showCopySuccessForElement(el);
+                });
+            } else {
+                fallbackCopyTextToClipboard(code, el);
+                showCopySuccessForElement(el);
+            }
+        }
+
+        // 通用元素复制成功效果
+        function showCopySuccessForElement(el) {
+            const button = el.nextElementSibling;
+            
+            el.style.background = 'rgba(0, 255, 157, 0.15)';
+            el.style.borderColor = '#00ff9d';
+            el.style.boxShadow = '0 0 15px rgba(0, 255, 157, 0.3)';
+            
+            if (button) {
+                const originalText = button.textContent;
+                button.textContent = '✅ 已复制!';
+                button.style.background = 'rgba(0, 255, 157, 0.3)';
+                button.style.borderColor = '#00ff9d';
+                button.style.color = '#00ff9d';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = 'rgba(0, 255, 255, 0.2)';
+                    button.style.borderColor = 'rgba(0, 255, 255, 0.4)';
+                    button.style.color = '#00ffff';
+                }, 2000);
+            }
+            
+            setTimeout(() => {
+                el.style.background = '#1a202c';
+                el.style.borderColor = 'rgba(0, 255, 255, 0.2)';
+                el.style.boxShadow = 'none';
+            }, 2000);
+            
+            showNotification('✅ 代码已复制到剪贴板', 'success');
+        }
+
+
 
         // 源码选择变更处理函数
         function changeSnippetSource() {
