@@ -3790,10 +3790,13 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                 const uuid = uuidInput.value.trim();
                 let updatedCode = snippetCodeCache;
                 
-                // 替换第一行的 FIXED_UUID 值
-                const firstLine = "const FIXED_UUID = '';";
-                const newFirstLine = \`const FIXED_UUID = '\${uuid}';\`;
-                updatedCode = updatedCode.replace(firstLine, newFirstLine);
+                // 替换 UUID 值（匹配 let UUID = '...' 格式）
+                if (uuid) {
+                    updatedCode = updatedCode.replace(
+                        /let UUID = '[^']*';/,
+                        \`let UUID = '\${uuid}';\`
+                    );
+                }
                 
                 snippetCodeElement.value = updatedCode;
             }
