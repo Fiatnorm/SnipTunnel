@@ -9,6 +9,10 @@ let UUID = 'd342d11e-d424-4583-b36e-524ab1f0afa4';
 let DEFAULT_PROXYIP = '';
 // =====================================================
 
+// 全局单例：Isolate 跨请求复用，避免重复实例化
+const ENC = new TextEncoder();
+const DEC = new TextDecoder();
+
 // UUID 查找表：模块加载时初始化一次，后续 O(1) 查找
 const HEX = Array.from({length:256}, (_,i) => (i+256).toString(16).substring(1));
 
@@ -303,7 +307,6 @@ async function socks5Handshake(host, port, cfg) {
   const { username, password, hostname, port: sp } = cfg;
   const sock = connect({ hostname, port: sp });
   const w = sock.writable.getWriter(), r = sock.readable.getReader();
-  const enc = new TextEncoder();
   try {
     // 认证协商
     const hasAuth = username && password;
@@ -317,7 +320,7 @@ async function socks5Handshake(host, port, cfg) {
       if (new Uint8Array(res)[1] !== 0) throw new Error('S5 auth fail');
     }
     // 连接请求（域名方式，兼容 IPv4/域名）
-    const hb = enc.encode(host);
+    const hb = ENC.encode(host);
     await w.write(new Uint8Array([5,1,0,3, hb.length, ...hb, (port>>8)&0xff, port&0xff]));
     res = (await r.read()).value;
     if (new Uint8Array(res)[1] !== 0) throw new Error('S5 connect fail');
@@ -341,7 +344,7 @@ async function httpHandshake(host, port, cfg) {
   let req = 'CONNECT ' + host + ':' + port + ' HTTP/1.1\r\nHost: ' + host + ':' + port + '\r\n';
   if (username && password) req += 'Proxy-Authorization: Basic ' + btoa(username + ':' + password) + '\r\n';
   req += 'Connection: keep-alive\r\n\r\n';
-  await w.write(new TextEncoder().encode(req));
+  await w.write(ENC.encode(req));
   w.releaseLock();
 
   const reader = sock.readable.getReader();
@@ -354,7 +357,7 @@ async function httpHandshake(host, port, cfg) {
       const tmp = new Uint8Array(buf.length + value.byteLength);
       tmp.set(buf); tmp.set(new Uint8Array(value), buf.length);
       buf = tmp;
-      const txt = new TextDecoder().decode(buf);
+      const txt = DEC.decode(buf);
       const endIdx = txt.indexOf('\r\n\r\n');
       if (endIdx === -1) continue;
 
@@ -402,7 +405,7 @@ function parseVLESS(b) {
   const ai = pi + 2, aType = b[ai];
   let host = '', vi = ai + 1, aLen;
   if (aType === 1) { aLen = 4; host = b[vi]+'.'+b[vi+1]+'.'+b[vi+2]+'.'+b[vi+3]; }
-  else if (aType === 2) { aLen = b[vi]; vi++; host = new TextDecoder().decode(b.slice(vi, vi + aLen)); }
+  else if (aType === 2) { aLen = b[vi]; vi++; host = DEC.decode(b.slice(vi, vi + aLen)); }
   else if (aType === 3) {
     aLen = 16; const s = [];
     for (let i = 0; i < 8; i++) s.push(((b[vi+i*2]<<8)|b[vi+i*2+1]).toString(16));
