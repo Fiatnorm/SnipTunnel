@@ -87,8 +87,20 @@ export default {
                 最终路径 = 全局socks5 ? `/http://${socks5}` : `/http=${socks5}`;
             }
 
-            if (url.searchParams.has('ed') && url.searchParams.get('ed') != '') 最终路径 += `?ed=${url.searchParams.get('ed')}`;
+            // 随机伪装路径
+            if (url.searchParams.has('randompath')) {
+                const randomChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                const randomLen = Math.floor(Math.random() * 8) + 4;
+                let randomStr = '';
+                for (let i = 0; i < randomLen; i++) randomStr += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
+                const randomExts = ['.js', '.css', '.html', '.json', '.png', '.jpg', '.woff2', '.svg'];
+                const randomExt = randomExts[Math.floor(Math.random() * randomExts.length)];
+                最终路径 = `/assets/${randomStr}${randomExt}` + 最终路径;
+            }
+
+            if (url.searchParams.has('ed') && url.searchParams.get('ed') != '') 最终路径 += (最终路径.includes('?') ? '&' : '?') + `ed=${url.searchParams.get('ed')}`;
             const 跳过证书验证 = (url.searchParams.has('scv')) ? true : false;
+            const TLS分片类型 = url.searchParams.get('frag') || null;
 
             const responseHeaders = {
                 "content-type": "text/plain; charset=utf-8",
@@ -312,13 +324,14 @@ export default {
                         const selected = uuid_json[randomIndex];
                         const uuid = selected.uuid;
                         const 伪装域名 = selected.host;
+                        const TLS分片参数 = TLS分片类型 === 'Happ' ? `&fragment=${encodeURIComponent('3,1,tlshello')}` : TLS分片类型 === 'Shadowrocket' ? `&fragment=${encodeURIComponent('1,40-60,30-50,tlshello')}` : '';
                         if (trojan) {
-                            const 木马Link = 'tr' + 'oj' + `an://${uuid}@${address}:${port}?security=tls&sni=${伪装域名}&type=ws&host=${伪装域名}&path=${encodeURIComponent(最终路径) + (跳过证书验证 ? '&allowInsecure=1' : '')}&fragment=${encodeURIComponent('1,40-60,30-50,tlshello')}#${encodeURIComponent(addressid + 节点备注)}`
+                            const 木马Link = 'tr' + 'oj' + `an://${uuid}@${address}:${port}?security=tls&sni=${伪装域名}&type=ws&host=${伪装域名}&path=${encodeURIComponent(最终路径) + (跳过证书验证 ? '&allowInsecure=1' : '') + TLS分片参数}#${encodeURIComponent(addressid + 节点备注)}`
                             return 木马Link;
                         } else {
-                            const 为烈士Link = 'vl' + 'es' + `s://${uuid}@${address}:${port}?security=tls&sni=${伪装域名}&type=ws&host=${伪装域名}&path=${encodeURIComponent(最终路径) + (跳过证书验证 ? '&allowInsecure=1' : '')}&fragment=${encodeURIComponent('1,40-60,30-50,tlshello')}&encryption=none#${encodeURIComponent(addressid + 节点备注)}`;
+                            const 为烈士Link = 'vl' + 'es' + `s://${uuid}@${address}:${port}?security=tls&sni=${伪装域名}&type=ws&host=${伪装域名}&path=${encodeURIComponent(最终路径) + (跳过证书验证 ? '&allowInsecure=1' : '') + TLS分片参数}&encryption=none#${encodeURIComponent(addressid + 节点备注)}`;
                             if (xhttp) {
-                                const xhttpLink = 'vl' + 'es' + `s://${uuid}@${address}:${port}?security=tls&sni=${伪装域名}&type=xhttp&host=${伪装域名}&path=${encodeURIComponent(最终路径) + (跳过证书验证 ? '&allowInsecure=1' : '')}&mode=stream-one&fragment=${encodeURIComponent('1,40-60,30-50,tlshello')}&encryption=none#${encodeURIComponent(addressid + 节点备注 + '-XHTTP')}`;
+                                const xhttpLink = 'vl' + 'es' + `s://${uuid}@${address}:${port}?security=tls&sni=${伪装域名}&type=xhttp&host=${伪装域名}&path=${encodeURIComponent(最终路径) + (跳过证书验证 ? '&allowInsecure=1' : '') + TLS分片参数}&mode=stream-one&encryption=none#${encodeURIComponent(addressid + 节点备注 + '-XHTTP')}`;
                                 return 为烈士Link + '\n' + xhttpLink;
                             } else return 为烈士Link;
                         }
@@ -2461,12 +2474,20 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                                 <input type="checkbox" id="skipCertVerify">
                                 <span class="checkbox-label">🔓 跳过证书验证</span>
                             </label>
+                            <label class="checkbox-option" for="enableRandomPath">
+                                <input type="checkbox" id="enableRandomPath">
+                                <span class="checkbox-label">🎲 随机伪装路径</span>
+                            </label>
+                            <label class="checkbox-option" for="enableFragment">
+                                <input type="checkbox" id="enableFragment">
+                                <span class="checkbox-label">⚡ 启用分片(Happ)</span>
+                            </label>
                         </div>
                         <div class="example">⚙️ 高级参数说明：
-• ed=2560：启用0-RTT
+• ed=2560：启用0-RTT，减少首次连接延迟
 • scv：跳过TLS证书验证，适用于双向解析的免费域名
-• xhttp：使用XHTTP协议必须保证域名开启gRPC支持
-• trojan：使用trojan协议并开启验证UUID的话，要求在当前页面填写正确的UUID后再点击复制源码
+• 随机伪装路径：每次订阅生成随机URL路径，降低流量特征被识别的风险
+• 分片(Happ)：TLS握手分片，拆分ClientHello绕过SNI嗅探封锁
                         </div>
                     </div>
                 </div>
@@ -2842,11 +2863,12 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                 snippetUuid: document.getElementById('snippetUuid') ? document.getElementById('snippetUuid').value : '',
                 proxyMode: document.querySelector('input[name="proxyMode"]:checked')?.value || 'proxyip',
                 ipMode: document.querySelector('input[name="ipMode"]:checked')?.value || 'custom',
-                snippetSource: document.getElementById('snippetSourceSelect')?.value || 'v',
                 globalSocks5: document.getElementById('globalSocks5').checked,
                 globalHttp: document.getElementById('globalHttp').checked,
                 enableEd: document.getElementById('enableEd') ? document.getElementById('enableEd').checked : false,
                 skipCertVerify: document.getElementById('skipCertVerify') ? document.getElementById('skipCertVerify').checked : false,
+                enableRandomPath: document.getElementById('enableRandomPath') ? document.getElementById('enableRandomPath').checked : false,
+                enableFragment: document.getElementById('enableFragment') ? document.getElementById('enableFragment').checked : false,
                 activeTab: currentTab, // 保存当前选中的选项卡
                 // 保存所有可折叠section的状态
                 sectionStates: getSectionStates(),
@@ -2948,8 +2970,17 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                 
                 if (formData.skipCertVerify !== undefined && document.getElementById('skipCertVerify')) {
                     document.getElementById('skipCertVerify').checked = formData.skipCertVerify;
-                    // 手动触发change事件更新样式
                     document.getElementById('skipCertVerify').dispatchEvent(new Event('change'));
+                }
+                
+                if (formData.enableRandomPath !== undefined && document.getElementById('enableRandomPath')) {
+                    document.getElementById('enableRandomPath').checked = formData.enableRandomPath;
+                    document.getElementById('enableRandomPath').dispatchEvent(new Event('change'));
+                }
+                
+                if (formData.enableFragment !== undefined && document.getElementById('enableFragment')) {
+                    document.getElementById('enableFragment').checked = formData.enableFragment;
+                    document.getElementById('enableFragment').dispatchEvent(new Event('change'));
                 }
                 
                 console.log('表单数据加载完成');
@@ -3092,6 +3123,16 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
             if (skipCertVerifyCheckbox) {
                 skipCertVerifyCheckbox.addEventListener('change', saveFormData);
             }
+            
+            const enableRandomPathCheckbox = document.getElementById('enableRandomPath');
+            if (enableRandomPathCheckbox) {
+                enableRandomPathCheckbox.addEventListener('change', saveFormData);
+            }
+            
+            const enableFragmentCheckbox = document.getElementById('enableFragment');
+            if (enableFragmentCheckbox) {
+                enableFragmentCheckbox.addEventListener('change', saveFormData);
+            }
         }
         
         function generateSubscription() {
@@ -3230,16 +3271,12 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
             // 处理高级参数
             const enableEd = document.getElementById('enableEd').checked;
             const skipCertVerify = document.getElementById('skipCertVerify').checked;
+            const enableRandomPath = document.getElementById('enableRandomPath').checked;
+            const enableFragment = document.getElementById('enableFragment').checked;
             
-            // 添加 ed=2560 参数（如果启用且不是天书13或ak源码）
+            // 添加 ed=2560 参数
             if (enableEd) {
-                // 检查是否为天书13或ak源码
-                const selectedSource = getSelectedSnippetSource();
-                const isSnippetsTab = activeTab && activeTab.id === 'snippets-tab';
-                
-                if (!isSnippetsTab || (selectedSource !== 't13' && selectedSource !== 'ak')) {
-                    params.append('ed', '2560');
-                }
+                params.append('ed', '2560');
             }
             
             // 添加 scv 参数（跳过证书验证）
@@ -3247,16 +3284,14 @@ async function subHtml(request, hostLength = 0, FileName, subProtocol, subConver
                 params.append('scv', 'true');
             }
             
-            // 检查是否选择了 ymyuuu 源码，如果是则添加 xhttp=true 参数
-            // 检查是否选择了 ca110us 源码，如果是则添加 trojan=true 参数
-            const isSnippetsTab = activeTab && activeTab.id === 'snippets-tab';
-            if (isSnippetsTab) {
-                const selectedSource = getSelectedSnippetSource();
-                if (selectedSource === 'my') {
-                    params.append('xhttp', 'true');
-                } else if (selectedSource === 'ca110us') {
-                    params.append('trojan', 'true');
-                }
+            // 添加随机伪装路径参数
+            if (enableRandomPath) {
+                params.append('randompath', 'true');
+            }
+            
+            // 添加分片参数 (Happ)
+            if (enableFragment) {
+                params.append('frag', 'Happ');
             }
             
             // 组合最终URL
